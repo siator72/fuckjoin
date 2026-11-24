@@ -639,6 +639,14 @@ async def main() -> None:
     pacing_delay = float(os.environ.get("JOIN_PACING_DELAY_SECONDS", "3"))
     max_channels = parse_int_setting(os.environ.get("MAX_JOINED_CHANNELS"), default=100)
 
+    # Optional SOCKS5 proxy: set PROXY_HOST/PROXY_PORT (e.g. 127.0.0.1:55555).
+    proxy = None
+    proxy_host = os.environ.get("PROXY_HOST", "").strip()
+    proxy_port = os.environ.get("PROXY_PORT", "").strip()
+    if proxy_host and proxy_port:
+        proxy = {"proxy_type": "socks5", "addr": proxy_host, "port": int(proxy_port)}
+        logging.info("Using SOCKS5 proxy %s:%s", proxy_host, proxy_port)
+
     # ADMINS: Has full control and can use /admin, /add_user, /state, etc.
     admins = parse_requester_ids(os.environ.get("ADMINS"))
 
@@ -650,6 +658,7 @@ async def main() -> None:
         os.environ.get("SESSION_NAME", "telegram-automation"),
         api_id,
         api_hash,
+        proxy=proxy,
         flood_sleep_threshold=0,
     )
     queue: asyncio.Queue[DeliveryTask] = asyncio.Queue(maxsize=MAX_QUEUE_SIZE)
